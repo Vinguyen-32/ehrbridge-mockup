@@ -296,39 +296,62 @@ const ConnectionsScreen = () => {
   );
 };
 
+const LOGS = [
+  { id:"job_8822", time:"10:42:03", type:"Patient",    dir:"PF → OA",        status:"success", records:1,  ms:312,  manual:false },
+  { id:"job_8821", time:"10:35:00", type:"Manual Sync",dir:"Both directions", status:"success", records:22, ms:2140, manual:true  },
+  { id:"job_8820", time:"10:30:00", type:"Appointment", dir:"PF → OA",        status:"success", records:14, ms:891,  manual:false },
+  { id:"job_8819", time:"10:15:01", type:"Patient",    dir:"OA → PF",        status:"error",   records:0,  ms:5002, manual:false, err:"429 Rate limit — auto-retried" },
+  { id:"job_8818", time:"10:00:00", type:"Patient",    dir:"PF → OA",        status:"success", records:8,  ms:670,  manual:false },
+  { id:"job_8817", time:"09:30:00", type:"Manual Sync",dir:"Both directions", status:"success", records:18, ms:1980, manual:true  },
+  { id:"job_8816", time:"09:00:00", type:"Appointment", dir:"PF → OA",        status:"success", records:6,  ms:512,  manual:false },
+];
+
 const SyncLogScreen = () => {
   const [filter, setFilter] = useState("all");
-  const filtered = LOGS.filter(e => filter==="all" || e.status===filter);
-  const btn = (f,l) => (
-    <button key={f} onClick={() => setFilter(f)} style={{ padding:"5px 13px", borderRadius:20, fontSize:11, fontWeight:500, border:`1px solid ${filter===f?C.accent:C.border}`, background:filter===f?C.accent:C.white, color:filter===f?"#fff":C.textMuted }}>{l}</button>
+  const filtered = LOGS.filter(e => {
+    if (filter === "all") return true;
+    if (filter === "manual") return e.manual;
+    return e.status === filter;
+  });
+  const Btn = ({ f, l }) => (
+    <button onClick={() => setFilter(f)} style={{ padding:"5px 13px", borderRadius:20, fontSize:11, fontWeight:500, border:`1px solid ${filter===f?C.accent:C.border}`, background:filter===f?C.accent:C.white, color:filter===f?"#fff":C.textMuted }}>{l}</button>
   );
   return (
     <div className="animate-in" style={{ display:"flex", flexDirection:"column", gap:0 }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
-        <SectionTitle title="Sync Log" sub="Full audit trail of all sync jobs" />
-        <div style={{ display:"flex", gap:6 }}>{[["all","All"],["success","Success"],["error","Errors only"]].map(([f,l])=>btn(f,l))}</div>
+        <SectionTitle title="Sync Log" sub="Full audit trail — automated and manual sync jobs" />
+        <div style={{ display:"flex", gap:6 }}>
+          <Btn f="all" l="All" />
+          <Btn f="success" l="Success" />
+          <Btn f="error" l="Errors" />
+          <Btn f="manual" l="Manual" />
+        </div>
       </div>
       <Card style={{ padding:0, overflow:"hidden" }}>
-        <div style={{ display:"grid", gridTemplateColumns:"105px 75px 95px 1fr 90px 65px", background:C.bg }}>
+        <div style={{ display:"grid", gridTemplateColumns:"105px 75px 110px 1fr 90px 65px", background:C.bg }}>
           {["Job ID","Time","Type","Direction / Note","Status","Duration"].map(h => (
             <div key={h} style={{ padding:"8px 10px", fontSize:10, fontWeight:600, color:C.textMuted, textTransform:"uppercase", letterSpacing:"0.06em" }}>{h}</div>
           ))}
         </div>
         {filtered.map((e,i) => (
-          <div key={i} style={{ display:"grid", gridTemplateColumns:"105px 75px 95px 1fr 90px 65px", borderBottom:`1px solid ${C.border}`, background:i%2===0?C.white:C.bg }}>
-            <div style={{ padding:"10px 10px", fontFamily:"'DM Mono',monospace", fontSize:10, color:C.accent }}>{e.id}</div>
-            <div style={{ padding:"10px 10px", fontFamily:"'DM Mono',monospace", fontSize:10, color:C.textMuted }}>{e.time}</div>
-            <div style={{ padding:"10px 10px" }}><Tag color={C.purple} bg={C.purpleLight}>{e.type}</Tag></div>
-            <div style={{ padding:"10px 10px", fontSize:11, color:C.text }}>
+          <div key={i} style={{ display:"grid", gridTemplateColumns:"105px 75px 110px 1fr 90px 65px", borderBottom:`1px solid ${C.border}`, background:i%2===0?C.white:C.bg }}>
+            <div style={{ padding:"10px", fontFamily:"'DM Mono',monospace", fontSize:10, color:C.accent }}>{e.id}</div>
+            <div style={{ padding:"10px", fontFamily:"'DM Mono',monospace", fontSize:10, color:C.textMuted }}>{e.time}</div>
+            <div style={{ padding:"10px" }}>
+              {e.manual
+                ? <Tag color={C.purple} bg={C.purpleLight}>Manual</Tag>
+                : <Tag color={C.accent} bg={C.accentLight}>{e.type}</Tag>}
+            </div>
+            <div style={{ padding:"10px", fontSize:11, color:C.text }}>
               {e.dir}
               {e.err && <div style={{ color:C.warning, fontSize:10, marginTop:2 }}>⚠ {e.err}</div>}
             </div>
-            <div style={{ padding:"10px 10px" }}>
+            <div style={{ padding:"10px" }}>
               <Tag color={e.status==="success"?C.success:C.danger} bg={e.status==="success"?C.successLight:C.dangerLight}>
                 {e.status==="success"?"Success":"Failed"}
               </Tag>
             </div>
-            <div style={{ padding:"10px 10px", fontFamily:"'DM Mono',monospace", fontSize:10, color:C.textMuted }}>{e.ms}ms</div>
+            <div style={{ padding:"10px", fontFamily:"'DM Mono',monospace", fontSize:10, color:C.textMuted }}>{e.ms}ms</div>
           </div>
         ))}
       </Card>
